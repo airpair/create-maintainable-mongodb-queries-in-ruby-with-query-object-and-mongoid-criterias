@@ -1,4 +1,7 @@
-Mongoid is an excellent Ruby ORM for mongodb. Building a mongodb query is pretty simple:
+Mongoid is an excellent Ruby ORM for mongodb, building a simple query is clear `Article.where(status: "published")` but when the       context grows the query becomes larger and its intentions are lost. Recognizing when to switch to a structured approach is important   to preserve the query logic and avoid premature optimization.
+
+Let's start from a simple query:
+
 
 ```ruby
 Article.where(status: "published", legacy: true, title: /#{keyword}/)
