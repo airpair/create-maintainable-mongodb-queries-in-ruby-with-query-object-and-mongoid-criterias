@@ -42,13 +42,32 @@ So far so good. The code deciding which filter to apply is becoming a [transacti
 
 >>> Organizes business logic by procedures where each procedure handles a single request from the presentation.
 
-Let's extend our example with a couple of features taken from a real application:
+Let's extend our over simplified "toy" problem with an example adapted from an actual project:
 
 * the keyword filter would need to match not only the title but also the article tags.
 * let's say we only store the tags ids in the database so we will need to contact the tags API to translate the keyword to an id. 
 * the keyword search should be on tags only when a specific string is provided (say "tag:'black'") and ignore titles.
 
-This increase in complexity means the above script needs to have more conditions, broken up in to sub-procedures.
+
+The increase in complexity means the above script will start looking like this:
+
+```ruby
+criteria = Mongoid::Criteria.new(Article)
+if filter[:published_state] == 'true'
+  criteria = Article.published
+elsif filter[:published_state] == 'false'
+  criteria = Article.unpublished
+end
+if filter[:keyword].present? && filter[:keyword].match(/^tag:'.+'$/)
+  searcher = TermsApi::Searcher.new
+  filter[:keyword].match(/tag:'(.+)'/)
+  searcher.match_exactly($1)
+  criteria.in( term_ids: searcher.term_ids )
+elsif filtering_by_keyword?
+  searcher = TermsApi::Searcher.new
+  criteria.or([ { term_ids: { "$in" => searcher.match(filter[:keyword]) } }, { headline: /#{filter[:keyword]}/i } ])
+end
+```
 
 ## When to stop using a transaction script
 
